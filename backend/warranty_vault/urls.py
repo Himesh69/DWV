@@ -8,11 +8,13 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 
 def api_root(request):
-    """Root API endpoint providing information about available endpoints"""
+    """Root endpoint - serves as health check for Railway"""
     return JsonResponse({
+        'status': 'healthy',
         'message': 'Digital Warranty Vault API',
         'version': '1.0',
         'endpoints': {
+            'health': '/api/health/',
             'admin': '/admin/',
             'auth': {
                 'register': '/api/auth/register/',
@@ -34,6 +36,7 @@ def health_check(request):
         'service': 'Digital Warranty Vault API',
         'version': '1.0'
     })
+
 
 
 urlpatterns = [

@@ -43,8 +43,5 @@ RUN mkdir -p /app/staticfiles /app/media
 # Collect static files
 RUN python manage.py collectstatic --noinput || true
 
-# Expose port (Railway will set PORT env variable)
-EXPOSE 8000
-
-# Use startup script to handle PORT variable
+# Use startup script to handle PORT variable (Railway sets PORT automatically)
 CMD ["/app/start.sh"]
