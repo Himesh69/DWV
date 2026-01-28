@@ -27,8 +27,18 @@ def api_root(request):
         }
     })
 
+def health_check(request):
+    """Health check endpoint for Railway deployment monitoring"""
+    return JsonResponse({
+        'status': 'healthy',
+        'service': 'Digital Warranty Vault API',
+        'version': '1.0'
+    })
+
+
 urlpatterns = [
     path('', api_root, name='api-root'),
+    path('api/health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('users.urls')),
     path('api/', include('warranties.urls')),

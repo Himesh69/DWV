@@ -1,125 +1,78 @@
-# Railway Deployment Fix - PORT Variable Issue
+# Railway PORT Configuration - Final Update
 
-## Problem
-Railway deployment was failing with error:
-```
-Error: '$PORT' is not a valid port number.
-```
+## ✅ Changes Applied
 
-## Root Cause
-The Dockerfile was using exec form `CMD ["gunicorn", ...]` with a hardcoded port `8000`, while Railway expects applications to use the `PORT` environment variable it provides dynamically.
+Following Railway's best practices, the application now **strictly uses the `PORT` environment variable** provided by Railway, with **no hardcoded fallbacks**.
 
-## Solution Applied ✅
+### Updated Files
 
-### 1. Updated Dockerfile
-Changed from exec form to shell form to allow environment variable expansion:
-
-**Before:**
+#### 1. Dockerfile
 ```dockerfile
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "warranty_vault.wsgi:application"]
+# Run gunicorn - PORT must be set by Railway
+# Using shell form to allow environment variable expansion
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 warranty_vault.wsgi:application
 ```
 
-**After:**
-```dockerfile
-CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 warranty_vault.wsgi:application
+**Key Points:**
+- Uses `$PORT` directly (no `${PORT:-8000}` fallback)
+- Shell form allows environment variable expansion
+- Railway will automatically provide the PORT value
+
+#### 2. Procfile
+```
+# Web process - runs gunicorn server with Railway's PORT
+web: gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 warranty_vault.wsgi:application
 ```
 
-**Why this works:**
-- Shell form allows `${PORT:-8000}` to be expanded at runtime
-- `${PORT:-8000}` means: use `$PORT` if set, otherwise default to `8000`
-- Railway will automatically set `PORT` environment variable
+**Key Points:**
+- Consistent with Dockerfile
+- Uses Railway's PORT variable
+- No hardcoded ports anywhere
 
-### 2. Updated railway.toml
-Removed the redundant `startCommand` since Dockerfile CMD now handles everything:
+## How It Works
 
-**Before:**
-```toml
-[deploy]
-startCommand = "gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 warranty_vault.wsgi:application"
-healthcheckPath = "/api/health/"
-restartPolicyType = "ON_FAILURE"
-```
+1. **Railway sets PORT**: Railway automatically provides a `PORT` environment variable (e.g., 3000, 5000, etc.)
+2. **Application reads PORT**: Gunicorn binds to `0.0.0.0:$PORT`
+3. **Dynamic binding**: The port is determined at runtime by Railway
 
-**After:**
-```toml
-[deploy]
-healthcheckPath = "/api/health/"
-restartPolicyType = "ON_FAILURE"
-```
+## Example (Similar to Flask Pattern)
 
-## Changes Pushed to GitHub ✅
+Your Django/Gunicorn setup now follows the same pattern as the Flask example:
 
-Commit: "Fix Railway PORT variable issue in Dockerfile"
-- Updated: `Dockerfile`
-- Updated: `railway.toml`
-
-## Next Steps
-
-1. **Railway will auto-redeploy** since changes are pushed to GitHub
-2. **Monitor the deployment** in Railway dashboard
-3. **Check deploy logs** to confirm the fix worked
-
-## Expected Behavior
-
-Railway will now:
-1. Build the Docker image
-2. Set the `PORT` environment variable (usually to a random port like 3000, 5000, etc.)
-3. Start gunicorn with the correct port binding
-4. Application should start successfully
-
-## If Deployment Still Fails
-
-Check these common issues:
-
-### 1. Database Connection
-Ensure PostgreSQL service is added and `DATABASE_URL` is set automatically by Railway.
-
-### 2. Missing Environment Variables
-Required variables:
-- `SECRET_KEY` - Your Django secret key
-- `DEBUG` - Set to `False`
-- `ALLOWED_HOSTS` - Set to `.railway.app`
-
-### 3. Static Files
-If you see 404 errors for static files, run:
-```bash
-python manage.py collectstatic --noinput
-```
-(This is already in the Dockerfile, but check if it succeeded)
-
-### 4. Database Migrations
-Ensure migrations run successfully. Check the Procfile release command:
-```
-release: python manage.py migrate --noinput
-```
-
-### 5. Health Check Endpoint
-Create a simple health check view if `/api/health/` doesn't exist:
-
+**Flask:**
 ```python
-# In warranty_vault/urls.py
-from django.http import JsonResponse
-
-def health_check(request):
-    return JsonResponse({"status": "healthy"})
-
-urlpatterns = [
-    path('api/health/', health_check),
-    # ... other patterns
-]
+port = int(os.environ.get("PORT", 8080))
+app.run(host="0.0.0.0", port=port)
 ```
+
+**Django/Gunicorn (Your Setup):**
+```bash
+gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 warranty_vault.wsgi:application
+```
+
+Both read the PORT from environment variables without hardcoding.
 
 ## Verification
 
-Once deployed successfully, you should be able to:
-1. Access your Railway URL (e.g., `https://web-production-xxxxx.up.railway.app`)
-2. See the API endpoints working
-3. Test OCR functionality by uploading a receipt
+✅ No hardcoded ports in Dockerfile  
+✅ No hardcoded ports in Procfile  
+✅ No hardcoded ports in railway.toml  
+✅ Application will use Railway's dynamic PORT  
 
-## Support
+## Deployment
 
-If you encounter other errors:
-1. Check Railway deploy logs
-2. Look for Python/Django errors
-3. Verify all environment variables are set correctly
-4. Ensure PostgreSQL database is connected
+Changes have been pushed to GitHub:
+- Commit: "Remove hardcoded port fallback - use Railway PORT variable only"
+- Railway will auto-redeploy with the new configuration
+
+## Expected Behavior
+
+When Railway deploys:
+1. Sets `PORT` environment variable (e.g., `PORT=3000`)
+2. Runs: `gunicorn --bind 0.0.0.0:3000 ...`
+3. Application starts successfully on Railway's assigned port
+4. Railway routes external traffic to your application
+
+## No More PORT Errors! 🎉
+
+The deployment should now succeed without any PORT-related errors.
