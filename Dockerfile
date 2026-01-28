@@ -39,8 +39,9 @@ RUN mkdir -p /app/staticfiles /app/media
 # Collect static files
 RUN python manage.py collectstatic --noinput || true
 
-# Expose port
+# Expose port (Railway will set PORT env variable)
 EXPOSE 8000
 
-# Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "warranty_vault.wsgi:application"]
+# Run gunicorn with PORT environment variable
+# Using shell form to allow environment variable expansion
+CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 warranty_vault.wsgi:application
