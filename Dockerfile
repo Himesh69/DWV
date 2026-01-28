@@ -33,6 +33,10 @@ RUN python -m pip install --upgrade pip && \
 # Copy backend code
 COPY backend /app/
 
+# Copy and set permissions for startup script
+COPY backend/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Create necessary directories
 RUN mkdir -p /app/staticfiles /app/media
 
@@ -42,6 +46,5 @@ RUN python manage.py collectstatic --noinput || true
 # Expose port (Railway will set PORT env variable)
 EXPOSE 8000
 
-# Run gunicorn - PORT must be set by Railway
-# Using shell form to allow environment variable expansion
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 warranty_vault.wsgi:application
+# Use startup script to handle PORT variable
+CMD ["/app/start.sh"]
