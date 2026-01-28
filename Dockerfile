@@ -42,6 +42,6 @@ RUN python manage.py collectstatic --noinput || true
 # Expose port (Railway will set PORT env variable)
 EXPOSE 8000
 
-# Run gunicorn with PORT environment variable
+# Run gunicorn - PORT must be set by Railway
 # Using shell form to allow environment variable expansion
-CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 warranty_vault.wsgi:application
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 warranty_vault.wsgi:application
