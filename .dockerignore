@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+env/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+media/
+staticfiles/
+*.sqlite3
+*.db
+
+# Environment
+.env
+.env.local
+
+# Documentation
+*.md
+!README.md
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
